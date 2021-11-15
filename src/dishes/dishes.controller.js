@@ -65,10 +65,11 @@ function foundDish(req, res, next) {
 
 function dishIdExists(req, res, next) {
   const { dishId } = req.params;
-  if (dishId) {
+  const idMatches = dishes.filter((dish) => dish.id === dishId)
+  if (idMatches.length > 0) {
     next();
   }
-  next({
+   next({
     status: 404,
     message: `Dish does not exist: ${dishId}.`
   })
