@@ -30,7 +30,7 @@ function dishHasDescription(req, res, next) {
 
 function dishHasPrice(req, res, next) {
   const { data: { price } = {} } = req.body;
-  if (price && price > 0 && !isNaN(price)) {
+  if (price && price > 0 && typeof price == "number") {
     return next();
   }
    next({
@@ -112,6 +112,6 @@ function update(req, res, next) {
 module.exports = {
   create: [dishHasName, dishHasDescription, dishHasPrice, dishHasImage, create],
   read: [foundDish, read],
-  update: [dishHasName, dishHasDescription, dishHasPrice, dishHasImage, foundDish, dishIdExists, update],
+  update: [dishIdExists, dishHasName, dishHasDescription, dishHasPrice, dishHasImage, foundDish, update],
   list,
 }

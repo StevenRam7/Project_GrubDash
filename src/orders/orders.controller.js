@@ -47,7 +47,7 @@ function orderHasStatus(req, res, next) {
 
 function statusIsPending(req, res, next) {
   const { data: { status } = {} } = req.body;
-  if (status == "pending") {
+  if (res.locals.order.status == "pending") {
     return next();
   }
   next({
@@ -57,8 +57,8 @@ function statusIsPending(req, res, next) {
 }
 
 function orderHasDishes(req, res, next) {
-  const { data: { dishes } = {} } = req.body;
-  if (dishes && Array.isArray(dishes) && dishes != []) {
+  const { data: { dishes } = [] } = req.body;
+  if (dishes && Array.isArray(dishes) && dishes.length > 0) {
     return next();
   }
   if (!Array.isArray(dishes) || dishes.length === 0) {
@@ -67,13 +67,7 @@ function orderHasDishes(req, res, next) {
     message: "Order must include at least one dish",
   })
   }
-  //if (dishes) {
-    //next({
-    //status: 400,
-    //message: "Order must include at least one dish",
-  //})
-  //}
-   next({
+  next({
     status: 400,
     message: "Order must include a dish",
   });
@@ -81,13 +75,16 @@ function orderHasDishes(req, res, next) {
 
 function orderDishHasQ(req, res, next) {
   const { data: { dishes } = {} } = req.body;
-  if (!isNaN(dishes.quantity) && dishes.quantity > 0) {
-    return next();
-  }
-   next({
+  for (i=0; i < dishes.length; i++) {
+    if (typeof dishes[i].quantity != "number" || dishes[i].quantity <= 0) {
+    return next({
     status: 400,
-    message: "Dish" + dishes.indexOf(dish) + "must have a quantity that is an integer greater than 0",
+    message: "Dish" + i + "must have a quantity that is an integer greater than 0",
   });
+  }
+  }
+  next();
+   
 }
 
 function foundOrder(req, res, next) {
@@ -140,18 +137,17 @@ function update(req, res, next) {
 function destroy(req, res, next) {
   const order1 = res.locals.order;
   const { orderId } = req.params;
-  const index = orders.findIndex((order) => order.id === Number(orderId));
-  if (order1.id === orderId) {
+ const index = orders.findIndex((order) => order.id == orderId)
    const deleted = orders.splice(index, 1)
-  res.status(204).json({ data: deleted });
-  }
+  res.sendStatus(204);
+  
   
 }
 
 module.exports = {
   create: [orderHasAddress, orderHasNumber, orderHasDishes, orderDishHasQ, create],
   read: [foundOrder, read],
-  update: [foundOrder, orderHasAddress, orderHasNumber, orderHasDishes, orderHasStatus, update],
-  delete: [statusIsPending, foundOrder, destroy],
+  update: [foundOrder, orderHasAddress, orderHasNumber, orderHasDishes, orderHasStatus, orderDishHasQ, update],
+  delete: [foundOrder, statusIsPending, destroy],
   list,
 }
